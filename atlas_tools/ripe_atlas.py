@@ -1,6 +1,7 @@
 from datetime import datetime
 import time
-from ripe.atlas.cousteau import Ping, Traceroute, AtlasSource, AtlasCreateRequest, AtlasResultsRequest, ProbeRequest
+from ripe.atlas.cousteau import Ping, Traceroute, AtlasSource, \
+    AtlasCreateRequest, AtlasResultsRequest, ProbeRequest
 
 
 def form_probes(**kwargs):
@@ -52,7 +53,8 @@ class Atlas(object):
 
         return source
 
-    def create_request(self, measurements, source, is_oneoff=True, packet_interval=5000):
+    def create_request(self, measurements, source,
+                       is_oneoff=True, packet_interval=5000):
         atlas_request = AtlasCreateRequest(
             start_time=datetime.utcnow(),
             key=self.atlas_api_key,

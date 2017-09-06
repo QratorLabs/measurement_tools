@@ -1,6 +1,9 @@
+import logging
 import time
 
 from ripe_atlas import Atlas, form_probes
+
+logger = logging.getLogger(__name__)
 
 
 def chunks(objects_dict, size=10000):
@@ -15,9 +18,10 @@ def chunks(objects_dict, size=10000):
 
 
 class Measure(object):
-    def __init__(self, target, atlas_api_key, logger, protocol='ICMP', probes_data=None, probes_features=None, measurements_list=None):
+    def __init__(self, target, atlas_api_key,
+                 protocol='ICMP', probes_data=None,
+                 probes_features=None, measurements_list=None):
         self.atlas = Atlas(atlas_api_key, protocol=protocol)
-        self.logger = logger
         self.name = ''
         self.target = target
         self.results = list()
@@ -51,8 +55,14 @@ class Measure(object):
 
         probes_data = form_probes(**probes_features)
         if len(probes_data) > 10000:
-            self.logger.warning('More than 10000 probes (%s), cut to 10000', len(probes_data))
-            probes_data = {probe_id: probes_data[probe_id] for probe_id in probes_data.keys()[:10000]}
+            logger.warning(
+                'More than 10000 probes (%s), cut to 10000',
+                len(probes_data)
+            )
+            probes_data = {
+                probe_id: probes_data[probe_id]
+                for probe_id in probes_data.keys()[:10000]
+                }
 
         return probes_data
 
@@ -65,16 +75,19 @@ class Measure(object):
         # 1000 probes per measurement
         for probes in chunks(self.probes_data, 1000):
             value = ','.join(str(probe_id) for probe_id in probes)
-            source = self.atlas.create_source(msm_type='probes', value=value, num_of_probes=len(probes))
+            source = self.atlas.create_source(
+                msm_type='probes',
+                value=value,
+                num_of_probes=len(probes)
+            )
 
             is_success, resp = self.atlas.create_request([measurement], source)
             if is_success:
                 self.response.extend(resp['measurements'])
 
             else:
-                self.logger.error('%s %s', is_success, resp)
+                logger.error('%s %s', is_success, resp)
 
-        self.logger.info(' Atlas %s measurement ids: %s', self.name, self.response)
         time.sleep(time_to_wait)
 
     def _flush_results(self, results):
@@ -83,6 +96,8 @@ class Measure(object):
     def run(self):
         if not self.response:
             self._make_measurement()
+
+        logger.info(' Atlas %s measurement ids: %s', self.name, self.response)
 
         for results in self.atlas.request_results(self.response):
             self._flush_results(results)
@@ -105,11 +120,15 @@ class PingMeasure(Measure):
             src_ip = item['from']
 
             if rtt == -1:
-                self.failed_probes[prb_id] = self.probes_data[prb_id]['country_code']
+                failed_country = self.probes_data[prb_id]['country_code']
+                self.failed_probes[prb_id] = failed_country
                 continue
 
             prb_data = self.probes_data[prb_id]
-            asn, region, coords = [prb_data[elem] for elem in ('asn_v4', 'country_code', 'geometry')]
+            asn, region, coords = [
+                prb_data[elem]
+                for elem in ('asn_v4', 'country_code', 'geometry')
+                ]
             lon, lat = coords['coordinates']
 
             self.results.append((prb_id, src_ip, asn, region, lat, lon, rtt))
