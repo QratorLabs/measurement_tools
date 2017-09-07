@@ -1,15 +1,13 @@
 import argparse
 from collections import defaultdict
 import logging
-import pandas
-import numpy as np
 import matplotlib as mpl
-import matplotlib.colors as colors
-import matplotlib.colorbar as colorbar
+from matplotlib.collections import PatchCollection
 from matplotlib.patches import Polygon
 import matplotlib.pyplot as pyplot
-from matplotlib.collections import PatchCollection
-from mpl_toolkits.basemap import Basemap
+import mpl_toolkits
+import numpy as np
+import pandas
 
 from atlas_tools import log_filename, LOGGING_FORMAT
 from measurement import PingMeasure
@@ -118,9 +116,9 @@ class CountryMapper(object):
             fontsize=20, y=.95
         )
 
-        basemap = Basemap(lon_0=0, projection='robin')
+        basemap = mpl_toolkits.basemap.Basemap(lon_0=0, projection='robin')
         basemap.drawmapboundary(color='w')
-        basemap.readshapefile(shapefile, 'units', linewidth=.2)
+        basemap.readshapefile(shapefile , 'units', linewidth=.2)
 
         all_count = set()
         for info, shape in zip(basemap.units_info, basemap.units):
@@ -145,8 +143,8 @@ class CountryMapper(object):
 
         # Draw color legend.
         ax_legend = legend.add_axes([0.35, 0.14, 0.3, 0.03], zorder=3)
-        cmap = colors.ListedColormap(scheme)
-        cbar = colorbar.ColorbarBase(
+        cmap = mpl.colors.ListedColormap(scheme)
+        cbar = mpl.colorbar.ColorbarBase(
             ax_legend,
             cmap=cmap,
             ticks=bins,

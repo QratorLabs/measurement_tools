@@ -1,7 +1,7 @@
 For Ubuntu:
 
 ```bash
-# apt-get proj-bin libproj-dev libgeos-dev
+# apt-get install proj-bin libproj-dev libgeos-dev
 ```
 
 ```bash
