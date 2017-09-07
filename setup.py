@@ -12,20 +12,14 @@ setup(
     author='Alexander Yakushkin',
     author_email='ay@qrator.net',
     packages=find_packages(),
-    dependency_links=[
-        'https://github.com/ioam/geoviews/tarball/master#egg=geoviews-1.3.2'
-    ],
     install_requires=[
         'Cartopy',
-        'geoviews>=1.3.2',
-        'holoviews',
         'geopy',
-        'shapely>=1.5.6',
-        'pyshp>=1.1.4',
-        'six>=1.3.0',
-        'matplotlib>=1.3.0',
-        'ripe.atlas.cousteau'
-
+        'holoviews',
+        'matplotlib',
+        'numpy',
+        'ripe.atlas.cousteau',
+        'xarray',
     ],
     entry_points={
         'console_scripts': [
