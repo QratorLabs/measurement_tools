@@ -1,19 +1,16 @@
 import argparse
 from collections import defaultdict
 import logging
-import matplotlib as mpl
-from matplotlib.collections import PatchCollection
-from matplotlib.patches import Polygon
-import matplotlib.pyplot as pyplot
-import mpl_toolkits
-import numpy as np
+
+import folium
+import geopandas
 import pandas
 
 from atlas_tools import log_filename, LOGGING_FORMAT
 from measurement import PingMeasure
 from util import get_parent_args_parser
 
-shapefile = 'countries/ne_50m_admin_0_countries'
+shapefile = 'countries/ne_50m_admin_0_countries.shp'
 
 logger = logging.getLogger(__name__)
 
@@ -39,12 +36,25 @@ class CountryMapper(object):
         args = self.args = args_parser.parse_args(args)
 
         logger.info(' Target: %s', args.target)
+
+        if args.filename is None:
+            args.filename = '%s_%s' % (args.target, self.project_name)
+
         self.pings = PingMeasure(
             args.target,
             args.key,
             measurements_list=args.msms
         )
         self.pings.run()
+
+    @staticmethod
+    def _choose_color(feature, dataframe, linear):
+        iso = feature['properties']['iso_a2']
+        if iso in dataframe.index:
+            return linear(dataframe.get_value(iso, 'Latency'))
+
+        else:
+            return 'lightgrey'
 
     @classmethod
     def create_run(cls):
@@ -57,7 +67,7 @@ class CountryMapper(object):
             '-c', '--colors',
             type=int,
             default=9,
-            help='number of colors in colormap (default: 9'
+            help='number of colors in colormap (default: 9)'
         )
         parser.add_argument(
             '-m', '--msms',
@@ -72,89 +82,39 @@ class CountryMapper(object):
 
     def handle_data(self):
         states_array = defaultdict(list)
-        for (_, _, _, region, _, _, rtt) in self.pings.results:
+        for (_, _, _, _, region, _, _, rtt) in self.pings.results:
             states_array[region].append(rtt)
 
         states = dict()
         for country, rtt_list in states_array.iteritems():
-            states[country] = int(sum(rtt_list) / len(rtt_list))
+            states[country] = min(int(sum(rtt_list) / len(rtt_list)), 120)
 
-        cut_states = [
-            (country, rtt)
-            for country, rtt in states.iteritems() if rtt <= 120
-            ]
-        bad_countries = [
-            country
-            for country, rtt in states.iteritems() if rtt > 120
-            ]
-
-        return cut_states, bad_countries
+        return states
 
     def run(self):
-        cut_countries, red_countries = self.handle_data()
+        df_shapefile_countries = geopandas.GeoDataFrame.from_file(shapefile)
+        cut_countries = self.handle_data()
         dataframe = pandas.DataFrame(
-            data=cut_countries,
-            columns=['Country_code', 'Latency']
+            data=cut_countries.items(),
+            columns=['iso_a2', 'Latency'],
         )
-        dataframe.set_index('Country_code', inplace=True)
-        values = dataframe['Latency']
-        colormap = pyplot.get_cmap('RdYlGn_r')
-        scheme = [
-            colormap(i / float(self.args.colors))
-            for i in xrange(self.args.colors)
-            ]
-        bins = np.linspace(0, 120, self.args.colors)
-        dataframe['bin'] = np.digitize(values, bins) - 1
-        dataframe.sort_values('bin', ascending=False).head(10)
+        dataframe.set_index('iso_a2', inplace=True)
 
-        mpl.style.use('seaborn-notebook')
-        legend = pyplot.figure(figsize=(22, 12))
+        linear = folium.LinearColormap(
+            ['green', 'yellow', 'red'], vmin=0., vmax=120.
+        ).to_step(6)
 
-        axis = legend.add_subplot(111, axisbg='w', frame_on=False)
-        legend.suptitle(
-            'Country map for %s' % self.args.target,
-            fontsize=20, y=.95
-        )
+        m = folium.Map(location=[20, 20], zoom_start=3)
 
-        basemap = mpl_toolkits.basemap.Basemap(lon_0=0, projection='robin')
-        basemap.drawmapboundary(color='w')
-        basemap.readshapefile(shapefile , 'units', linewidth=.2)
+        folium.GeoJson(
+            df_shapefile_countries,
+            style_function=lambda feature: {
+                'fillColor': self._choose_color(feature, dataframe, linear),
+                'color': 'black',
+                'weight': 1,
+                'fillOpacity': 0.7
+            }
+        ).add_to(m)
 
-        all_count = set()
-        for info, shape in zip(basemap.units_info, basemap.units):
-            all_count.add(info['iso_a2'])
-            iso2 = info['iso_a2']
-            if iso2 in dataframe.index:
-                color = scheme[int(dataframe.ix[iso2]['bin'])]
-
-            elif iso2 in red_countries:
-                color = 'DarkRed'
-
-            else:
-                color = 'LightGray'
-
-            patches = [Polygon(np.array(shape), True)]
-            path_collection = PatchCollection(patches)
-            path_collection.set_facecolor(color)
-            axis.add_collection(path_collection)
-
-        # Cover up Antarctica so legend can be placed over it.
-        axis.axhspan(0, 1000 * 1800, facecolor='w', edgecolor='w', zorder=2)
-
-        # Draw color legend.
-        ax_legend = legend.add_axes([0.35, 0.14, 0.3, 0.03], zorder=3)
-        cmap = mpl.colors.ListedColormap(scheme)
-        cbar = mpl.colorbar.ColorbarBase(
-            ax_legend,
-            cmap=cmap,
-            ticks=bins,
-            boundaries=bins,
-            orientation='horizontal'
-        )
-        cbar.ax.set_xticklabels([str(round(i, 1)) for i in bins])
-
-        pyplot.savefig(
-            '%s_countrymap.png' % self.args.target,
-            bbox_inches='tight',
-            pad_inches=.2
-        )
+        m.add_child(linear)
+        m.save('%s.html' % self.args.filename)

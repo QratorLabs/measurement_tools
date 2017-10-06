@@ -1,5 +1,6 @@
 from datetime import datetime
 import time
+
 from ripe.atlas.cousteau import Ping, Traceroute, AtlasSource, \
     AtlasCreateRequest, AtlasResultsRequest, ProbeRequest
 
@@ -27,7 +28,8 @@ class Atlas(object):
             target=target,
             description="Trace for %s" % target,
             protocol=self.protocol,
-            packets=packets
+            packets=packets,
+            skip_dns_check=True
         )
 
         return trace
@@ -38,7 +40,8 @@ class Atlas(object):
             target=target,
             description="Ping for %s" % target,
             protocol=self.protocol,
-            packets=packets
+            packets=packets,
+            skip_dns_check=True
         )
 
         return ping

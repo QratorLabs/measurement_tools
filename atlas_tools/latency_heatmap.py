@@ -1,12 +1,13 @@
 import argparse
-from cartopy import crs
 from collections import defaultdict
+import logging
+import math
+
+from cartopy import crs
 from geopy.distance import great_circle
 from geoviews import feature as gf
 import geoviews as gv
 import holoviews as hv
-import logging
-import math
 import numpy as np
 import xarray as xr
 
@@ -44,6 +45,10 @@ class HeatMapper(object):
         args = self.args = args_parser.parse_args(args)
 
         logger.info(' Target: %s', args.target)
+
+        if args.filename is None:
+            args.filename = '%s_%s' % (args.target, self.project_name)
+
         self.pings = PingMeasure(
             args.target,
             args.key,
@@ -126,7 +131,7 @@ class HeatMapper(object):
 
     def make_grid(self):
         probes_grid = defaultdict(list)
-        for (_, _, _, _, lat, lon, rtt) in self.pings.results:
+        for (_, _, _, _, _, lat, lon, rtt) in self.pings.results:
             for coord in self.coords_in_circle(lat, lon):
                 probes_grid[coord].append(rtt)
 

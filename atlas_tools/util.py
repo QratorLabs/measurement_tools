@@ -16,5 +16,10 @@ def get_parent_args_parser():
         required=True,
         help='ATLAS_API_CREATE_KEY'
     )
+    parser.add_argument(
+        '-f', '--filename',
+        default=None,
+        help='map filename'
+    )
 
     return parser

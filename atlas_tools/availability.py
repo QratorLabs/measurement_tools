@@ -62,7 +62,7 @@ def log_pings(pings, failed_countries, failed_countries_size):
             )
 
 
-def log_traces(target, traces, failed_probes):
+def log_traces(traces, failed_probes, filename):
     logger.info(' Atlas trace measurement ids: %s', traces.response)
     logger.info(
         ' Failed traces: %s / %s',
@@ -70,7 +70,7 @@ def log_traces(target, traces, failed_probes):
         len(failed_probes)
     )
 
-    with open('failed_traces_to_%s.txt' % target, 'w+') as fd:
+    with open('%s.dat' % filename, 'w+') as fd:
         for src_ip, prb_id, trace in traces.results:
             fd.write(
                 'Source ip: %s, prb_id: %s\nTrace:\nHop\tip\t\trtt\tptr\n' %
@@ -112,6 +112,10 @@ def do_ip_test(args=None):
     args = args_parser.parse_args(args)
 
     logger.info(' Target: %s', args.target)
+
+    if args.filename is None:
+        args.filename = 'failed_traces_to_%s' % args.target
+
     probes_features = dict()
     if args.country is not None:
         probes_features['country_code'] = args.country
@@ -140,4 +144,4 @@ def do_ip_test(args=None):
     )
     traces.run()
 
-    log_traces(args.target, traces, pings.failed_probes)
+    log_traces(traces, pings.failed_probes, args.filename)

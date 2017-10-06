@@ -14,11 +14,16 @@ setup(
     packages=find_packages(),
     install_requires=[
         'Cartopy',
+        'folium',
+        'geopandas',
         'geopy',
         'holoviews',
-        'matplotlib',
+        'matplotlib==1.5.3',
         'numpy',
+        'pandas',
+        'Pillow',
         'ripe.atlas.cousteau',
+        'scipy',
         'xarray',
     ],
     entry_points={
@@ -33,6 +38,9 @@ setup(
             '{}.latency_countrymap:CountryMapper.create_run'.format(
                 package_name
             ),
+
+            'atlas-nslookupmap = ' +
+            '{}.nslookup_map:NsLookupMapper.create_run'.format(package_name),
         ],
     },
 )
