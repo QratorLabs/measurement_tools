@@ -1,4 +1,3 @@
-===========
 Atlas tools
 ===========
 
@@ -10,7 +9,7 @@ Features:
 * atlas-nslookupmap - draws domain resolving world map
 * availability - diagnostic tool that measures availability of target around the world (or country) and traces target from probes with false result.
 
-------------
+
 Installation
 ------------
 
@@ -19,11 +18,11 @@ From atlas_tools folder:
 .. code:: bash
 	$ pip install -r requirements.txt
 
----------------
+
 Getting Started
 ---------------
 
-Firstly, your should create an `RIPE Atlas <https://atlas.ripe.net/>` account. Then accumulate some credits.
+Firstly, your should create an 'RIPE Atlas <https://atlas.ripe.net/>'__ account. Then accumulate some credits.
 
 
 HeatMap
@@ -45,4 +44,5 @@ NsLookup map
 
 .. code:: bash
 	atlas-nslookupmap -t 'target' -k 'your_atlas_api_key'
+
 
