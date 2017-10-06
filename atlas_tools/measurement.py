@@ -118,10 +118,16 @@ class PingMeasure(Measure):
             prb_id = item['prb_id']
             rtt = item['min']
             src_ip = item['from']
+            try:
+                dst_ip = item['dst_addr']
+
+            except KeyError:
+                logger.info('dns resolution failed: %s', prb_id)
+                continue
 
             if rtt == -1:
-                failed_country = self.probes_data[prb_id]['country_code']
-                self.failed_probes[prb_id] = failed_country
+                self.failed_probes[prb_id] = \
+                    self.probes_data[prb_id]['country_code']
                 continue
 
             prb_data = self.probes_data[prb_id]
@@ -131,7 +137,7 @@ class PingMeasure(Measure):
                 ]
             lon, lat = coords['coordinates']
 
-            self.results.append((prb_id, src_ip, asn, region, lat, lon, rtt))
+            self.results.append((prb_id, src_ip, dst_ip, asn, region, lat, lon, rtt))
 
 
 class TraceMeasure(Measure):
