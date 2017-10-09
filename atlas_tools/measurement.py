@@ -19,7 +19,7 @@ def chunks(objects_dict, size=10000):
 
 class Measure(object):
     def __init__(self, target, atlas_api_key,
-                 protocol='ICMP', probes_data=None,
+                 protocol='ICMP', probes_data=None, probe_number=25000,
                  probes_features=None, measurements_list=None):
         self.atlas = Atlas(atlas_api_key, protocol=protocol)
         self.name = ''
@@ -32,12 +32,13 @@ class Measure(object):
             self.response = measurements_list
 
         if probes_data is None:
-            self.probes_data = self._form_probes(probes_features)
+            self.probes_data = self._form_probes(probes_features, probe_number)
 
         else:
             self.probes_data = probes_data
 
-    def _form_probes(self, probes_features):
+    def _form_probes(self, probes_features, probe_number):
+        logger.info(' Forming probes list')
         if probes_features is None:
             probes_features = {}
 
@@ -54,14 +55,16 @@ class Measure(object):
             probes_features['tags'] = "system-ipv4-works"
 
         probes_data = form_probes(**probes_features)
-        if len(probes_data) > 10000:
+        if len(probes_data) > probe_number:
             logger.warning(
-                'More than 10000 probes (%s), cut to 10000',
-                len(probes_data)
+                ' More than %s probes (%s), cut to %s',
+                probe_number,
+                len(probes_data),
+                probe_number
             )
             probes_data = {
                 probe_id: probes_data[probe_id]
-                for probe_id in probes_data.keys()[:10000]
+                for probe_id in probes_data.keys()[:probe_number]
                 }
 
         return probes_data
@@ -70,8 +73,10 @@ class Measure(object):
         pass
 
     def _form_response(self, measurement, time_to_wait=180):
+        logger.info(' Forming measurement and waiting response')
+
         # Atlas limits:
-        # 10 measurements per target simultaneously
+        # 25 measurements per target simultaneously
         # 1000 probes per measurement
         for probes in chunks(self.probes_data, 1000):
             value = ','.join(str(probe_id) for probe_id in probes)
@@ -122,7 +127,7 @@ class PingMeasure(Measure):
                 dst_ip = item['dst_addr']
 
             except KeyError:
-                logger.info('dns resolution failed: %s', prb_id)
+                logger.info(' Dns resolution failed: %s', prb_id)
                 continue
 
             if rtt == -1:
@@ -137,7 +142,9 @@ class PingMeasure(Measure):
                 ]
             lon, lat = coords['coordinates']
 
-            self.results.append((prb_id, src_ip, dst_ip, asn, region, lat, lon, rtt))
+            self.results.append(
+                (prb_id, src_ip, dst_ip, asn, region, lat, lon, rtt)
+            )
 
 
 class TraceMeasure(Measure):

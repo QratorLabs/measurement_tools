@@ -4,12 +4,12 @@ import logging
 import socket
 import time
 
-from atlas_tools import LOGGING_FORMAT, log_filename
 from measurement import PingMeasure, TraceMeasure
-from util import get_parent_args_parser
+from util import get_parent_args_parser, start_logger
 
 
 logger = logging.getLogger(__name__)
+project_name = __package__.split('.')[0]
 
 
 def lookup(addr):
@@ -21,18 +21,7 @@ def lookup(addr):
 
 def get_args_parser():
     parser = argparse.ArgumentParser(parents=[get_parent_args_parser()])
-    parser.add_argument(
-        '-c', '--country',
-        type=str, default=None,
-        help='measurement only for selected country (2-letter code country) '
-             '(default: all active Atlas probes)'
-    )
-    parser.add_argument(
-        '-p', '--protocol',
-        choices=['ICMP', 'UDP'],
-        default='ICMP',
-        help='protocol for measurements: ICMP or UDP (default: ICMP)'
-    )
+
     return parser
 
 
@@ -95,15 +84,7 @@ def log_traces(traces, failed_probes, filename):
 
 
 def do_ip_test(args=None):
-    root_logger = logging.getLogger()
-    for log_handler in root_logger.handlers:
-        root_logger.removeHandler(log_handler)
-
-    logging.basicConfig(
-        format=LOGGING_FORMAT,
-        filename=log_filename,
-        level=logging.INFO
-    )
+    start_logger(project_name)
 
     failed_countries_size = 10
     failed_countries = False
@@ -135,6 +116,8 @@ def do_ip_test(args=None):
         probe_id: pings.probes_data[probe_id]
         for probe_id in pings.failed_probes
         }
+
+    logger.info(' Tracing target with ping-failed probes')
 
     traces = TraceMeasure(
         args.target,

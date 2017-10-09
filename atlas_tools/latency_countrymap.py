@@ -8,9 +8,8 @@ import geopandas
 import pandas
 import pkg_resources
 
-from atlas_tools import log_filename, LOGGING_FORMAT
 from measurement import PingMeasure
-from util import get_parent_args_parser
+from util import get_parent_args_parser, start_logger
 
 shapefile_dir = 'countries'
 shapefile_name = 'ne_50m_admin_0_countries.shp'
@@ -22,16 +21,7 @@ class CountryMapper(object):
     project_name = __package__.split('.')[0]
 
     def __init__(self, args=None):
-        root_logger = logging.getLogger()
-        for log_handler in root_logger.handlers:
-            root_logger.removeHandler(log_handler)
-
-        logging.basicConfig(
-            level=logging.INFO,
-            format=LOGGING_FORMAT,
-            filename=log_filename
-        )
-        logging.root.handlers[0].addFilter(logging.Filter(self.project_name))
+        start_logger(self.project_name)
 
         self.probes_grid = defaultdict(list)
 
@@ -43,9 +33,15 @@ class CountryMapper(object):
         if args.filename is None:
             args.filename = '%s_%s' % (args.target, self.project_name)
 
+        probes_features = dict()
+        if args.country is not None:
+            probes_features['country_code'] = args.country
+
         self.pings = PingMeasure(
             args.target,
             args.key,
+            protocol=args.protocol,
+            probes_features=probes_features,
             measurements_list=args.msms
         )
         self.pings.run()
@@ -66,12 +62,6 @@ class CountryMapper(object):
     @staticmethod
     def get_args_parser():
         parser = argparse.ArgumentParser(parents=[get_parent_args_parser()])
-        parser.add_argument(
-            '-c', '--colors',
-            type=int,
-            default=9,
-            help='number of colors in colormap (default: 9)'
-        )
         parser.add_argument(
             '-m', '--msms',
             metavar='id',
@@ -95,6 +85,8 @@ class CountryMapper(object):
         return states
 
     def run(self):
+        logger.info(' Drawing the countrymap')
+
         resource_dir = pkg_resources.resource_filename(__package__, shapefile_dir)
         resource_fname = os.path.join(resource_dir, shapefile_name)
         df_shapefile_countries = geopandas.GeoDataFrame.from_file(resource_fname)
@@ -110,7 +102,11 @@ class CountryMapper(object):
             ['green', 'yellow', 'red'], vmin=0., vmax=120.
         ).to_step(6)
 
-        m = folium.Map(location=[20, 20], zoom_start=3)
+        countrymap = folium.Map(
+            location=[20, 20],
+            zoom_start=3, min_zoom=2, max_zoom=8,
+            tiles='Mapbox Bright'
+        )
 
         folium.GeoJson(
             df_shapefile_countries,
@@ -118,9 +114,16 @@ class CountryMapper(object):
                 'fillColor': self._choose_color(feature, dataframe, linear),
                 'color': 'black',
                 'weight': 1,
-                'fillOpacity': 0.7
+                'fillOpacity': 0.6
+            },
+            highlight_function=lambda feature: {
+                'fillColor': self._choose_color(feature, dataframe, linear),
+                'color': 'black',
+                'weight': 3,
+                'fillOpacity': 0.7,
+                'dashArray': '5, 5'
             }
-        ).add_to(m)
+        ).add_to(countrymap)
 
-        m.add_child(linear)
-        m.save('%s.html' % self.args.filename)
+        countrymap.add_child(linear)
+        countrymap.save('%s.html' % self.args.filename)

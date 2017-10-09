@@ -35,8 +35,8 @@ setup(
             'atlas-heatmap = ' +
             '{}.latency_heatmap:HeatMapper.create_run'.format(package_name),
 
-            'atlas-availability = ' +
-            '{}.availability:do_ip_test'.format(package_name),
+            'atlas-reachability = ' +
+            '{}.reachability:do_ip_test'.format(package_name),
 
             'atlas-countrymap = ' +
             '{}.latency_countrymap:CountryMapper.create_run'.format(package_name),

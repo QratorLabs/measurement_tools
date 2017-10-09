@@ -11,9 +11,8 @@ import holoviews as hv
 import numpy as np
 import xarray as xr
 
-from atlas_tools import LOGGING_FORMAT, log_filename
 from measurement import PingMeasure
-from util import get_parent_args_parser
+from util import get_parent_args_parser, start_logger
 
 hv.extension('matplotlib')
 hv.output(backend='matplotlib')
@@ -22,22 +21,12 @@ latitude_1_degree = 111.0
 base_value = 0.0
 
 logger = logging.getLogger(__name__)
+project_name = __package__.split('.')[0]
 
 
 class HeatMapper(object):
-    project_name = __package__.split('.')[0]
-
     def __init__(self, args=None):
-        root_logger = logging.getLogger()
-        for log_handler in root_logger.handlers:
-            root_logger.removeHandler(log_handler)
-
-        logging.basicConfig(
-            level=logging.INFO,
-            format=LOGGING_FORMAT,
-            filename=log_filename
-        )
-        logging.root.handlers[0].addFilter(logging.Filter(self.project_name))
+        start_logger(project_name)
 
         self.probes_grid = defaultdict(list)
 
@@ -47,11 +36,17 @@ class HeatMapper(object):
         logger.info(' Target: %s', args.target)
 
         if args.filename is None:
-            args.filename = '%s_%s' % (args.target, self.project_name)
+            args.filename = '%s_%s' % (args.target, project_name)
+
+        probes_features = dict()
+        if args.country is not None:
+            probes_features['country_code'] = args.country
 
         self.pings = PingMeasure(
             args.target,
             args.key,
+            protocol=args.protocol,
+            probes_features=probes_features,
             measurements_list=args.msms
         )
         self.pings.run()
@@ -140,7 +135,9 @@ class HeatMapper(object):
                 30, (sum(rtts) / len(rtts))
             )
 
-    def paint_heatmap(self):
+    def make_heatmap(self):
+        logger.info(' Drawing the heatmap')
+
         lat = np.linspace(-90, 90, num=180 * self.args.density + 1)
         lon = np.linspace(-179.75, 180, num=360 * self.args.density)
 
@@ -177,4 +174,4 @@ class HeatMapper(object):
 
     def run(self):
         self.make_grid()
-        self.paint_heatmap()
+        self.make_heatmap()
