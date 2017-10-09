@@ -4,6 +4,7 @@ from setuptools import find_packages, setup
 
 from atlas_tools import __version__
 
+
 package_name = 'atlas_tools'
 
 setup(
@@ -26,6 +27,9 @@ setup(
         'scipy',
         'xarray',
     ],
+    package_data={
+        package_name: ['countries/*'],
+    },
     entry_points={
         'console_scripts': [
             'atlas-heatmap = ' +
@@ -35,9 +39,7 @@ setup(
             '{}.availability:do_ip_test'.format(package_name),
 
             'atlas-countrymap = ' +
-            '{}.latency_countrymap:CountryMapper.create_run'.format(
-                package_name
-            ),
+            '{}.latency_countrymap:CountryMapper.create_run'.format(package_name),
 
             'atlas-nslookupmap = ' +
             '{}.nslookup_map:NsLookupMapper.create_run'.format(package_name),

@@ -1,16 +1,19 @@
 import argparse
 from collections import defaultdict
 import logging
+import os
 
 import folium
 import geopandas
 import pandas
+import pkg_resources
 
 from atlas_tools import log_filename, LOGGING_FORMAT
 from measurement import PingMeasure
 from util import get_parent_args_parser
 
-shapefile = 'countries/ne_50m_admin_0_countries.shp'
+shapefile_dir = 'countries'
+shapefile_name = 'ne_50m_admin_0_countries.shp'
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +95,10 @@ class CountryMapper(object):
         return states
 
     def run(self):
-        df_shapefile_countries = geopandas.GeoDataFrame.from_file(shapefile)
+        resource_dir = pkg_resources.resource_filename(__package__, shapefile_dir)
+        resource_fname = os.path.join(resource_dir, shapefile_name)
+        df_shapefile_countries = geopandas.GeoDataFrame.from_file(resource_fname)
+
         cut_countries = self.handle_data()
         dataframe = pandas.DataFrame(
             data=cut_countries.items(),

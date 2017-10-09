@@ -171,7 +171,7 @@ class HeatMapper(object):
         renderer = hv.renderer('matplotlib').instance(fig='png')
         renderer.save(
             img,
-            '%s_heatmap' % self.args.target,
+            self.args.filename,
             style=dict(Image={'cmap': 'RdYlGn_r'})
         )
 
