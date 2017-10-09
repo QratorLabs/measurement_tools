@@ -38,7 +38,7 @@ class Measure(object):
             self.probes_data = probes_data
 
     def _form_probes(self, probes_features, probe_number):
-        logger.info(' Forming probes list')
+        logger.info('Forming probes list')
         if probes_features is None:
             probes_features = {}
 
@@ -57,7 +57,7 @@ class Measure(object):
         probes_data = form_probes(**probes_features)
         if len(probes_data) > probe_number:
             logger.warning(
-                ' More than %s probes (%s), cut to %s',
+                'More than %s probes (%s), cut to %s',
                 probe_number,
                 len(probes_data),
                 probe_number
@@ -73,7 +73,7 @@ class Measure(object):
         pass
 
     def _form_response(self, measurement, time_to_wait=180):
-        logger.info(' Forming measurement and waiting response')
+        logger.info('Forming measurement and waiting response')
 
         # Atlas limits:
         # 25 measurements per target simultaneously
@@ -102,7 +102,7 @@ class Measure(object):
         if not self.response:
             self._make_measurement()
 
-        logger.info(' Atlas %s measurement ids: %s', self.name, self.response)
+        logger.info('Atlas %s measurement ids: %s', self.name, self.response)
 
         for results in self.atlas.request_results(self.response):
             self._flush_results(results)
@@ -127,7 +127,7 @@ class PingMeasure(Measure):
                 dst_ip = item['dst_addr']
 
             except KeyError:
-                logger.info(' Dns resolution failed: %s', prb_id)
+                logger.info('Dns resolution failed: %s', prb_id)
                 continue
 
             if rtt == -1:

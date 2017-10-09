@@ -33,7 +33,7 @@ class HeatMapper(object):
         args_parser = self.get_args_parser()
         args = self.args = args_parser.parse_args(args)
 
-        logger.info(' Target: %s', args.target)
+        logger.info('Target: %s', args.target)
 
         if args.filename is None:
             args.filename = '%s_%s' % (args.target, project_name)
@@ -136,7 +136,7 @@ class HeatMapper(object):
             )
 
     def make_heatmap(self):
-        logger.info(' Drawing the heatmap')
+        logger.info('Drawing the heatmap')
 
         lat = np.linspace(-90, 90, num=180 * self.args.density + 1)
         lon = np.linspace(-179.75, 180, num=360 * self.args.density)

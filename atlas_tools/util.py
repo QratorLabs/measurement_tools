@@ -1,7 +1,7 @@
 import argparse
 import logging
 
-LOGGING_FORMAT = '%(asctime)s:%(levelname)s:%(message)s'
+LOGGING_FORMAT = '%(asctime)s: %(message)s'
 log_filename = 'atlas.log'
 
 
@@ -19,26 +19,22 @@ def get_parent_args_parser():
     )
     parser.add_argument(
         '-f', '--filename',
-        default=None,
         help='Results filename'
     )
     parser.add_argument(
-        '--UDP',
-        dest='protocol',
-        action='store_const',
-        const='UDP',
+        '-p', '--protocol',
+        choices=['ICMP', 'UDP'],
         default='ICMP',
-        help='Do measurement via UDP (by default: ICMP)'
+        help='Choose measurement protocol (default: ICMP)'
     )
     parser.add_argument(
         '-c', '--country',
-        type=str, default=None,
         help='Measurement only for selected country (2-letter code country) '
              '(default: all active Atlas probes)'
     )
     parser.add_argument(
         '-n', '--probe_number',
-        type=int, default=None,
+        type=int,
         help='Number of probes in measurement, '
              '(default: all active Atlas probes)'
     )

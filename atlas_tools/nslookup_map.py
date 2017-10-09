@@ -26,7 +26,7 @@ class NsLookupMapper(object):
         args_parser = self.get_args_parser()
         args = self.args = args_parser.parse_args(args)
 
-        logger.info(' Target: %s', args.target)
+        logger.info('Target: %s', args.target)
 
         if args.filename is None:
             args.filename = '%s_%s' % (args.target, self.project_name)
@@ -63,7 +63,7 @@ class NsLookupMapper(object):
         cls().run()
 
     def make_map(self):
-        logger.info(' Drawing the nslookup map')
+        logger.info('Drawing the nslookup map')
 
         columns_labels = [
             'probe_id', 'source_ip', 'dst_ip', 'asn',

@@ -26,9 +26,9 @@ def get_args_parser():
 
 
 def log_pings(pings, failed_countries, failed_countries_size):
-    logger.info(' Atlas ping measurement ids: %s', pings.response)
+    logger.info('Atlas ping measurement ids: %s', pings.response)
     logger.info(
-        ' Failed pings: %s / %s',
+        'Failed pings: %s / %s',
         len(pings.failed_probes),
         len(pings.results) + len(pings.failed_probes)
     )
@@ -38,23 +38,23 @@ def log_pings(pings, failed_countries, failed_countries_size):
         for country in pings.failed_probes.itervalues():
             f_countries[country.upper()] += 1
 
-        logging.info(' Probe_ids: %s', pings.failed_probes.keys())
-        logging.info(' Failed pings breakdown by countries:')
+        logging.info('Probe_ids: %s', pings.failed_probes.keys())
+        logging.info('Failed pings breakdown by countries:')
         f_countries = f_countries.items()
         f_countries.sort(key=lambda tup: tup[1], reverse=True)
         for i in xrange(min(failed_countries_size, len(f_countries))):
             country, counter = f_countries[i]
             logging.info(
-                ' %s: %.4f',
+                '%s: %.4f',
                 country,
                 float(counter) / len(pings.failed_probes)
             )
 
 
 def log_traces(traces, failed_probes, filename):
-    logger.info(' Atlas trace measurement ids: %s', traces.response)
+    logger.info('Atlas trace measurement ids: %s', traces.response)
     logger.info(
-        ' Failed traces: %s / %s',
+        'Failed traces: %s / %s',
         len(traces.results),
         len(failed_probes)
     )
@@ -92,7 +92,7 @@ def do_ip_test(args=None):
     args_parser = get_args_parser()
     args = args_parser.parse_args(args)
 
-    logger.info(' Target: %s', args.target)
+    logger.info('Target: %s', args.target)
 
     if args.filename is None:
         args.filename = 'failed_traces_to_%s' % args.target
@@ -117,7 +117,7 @@ def do_ip_test(args=None):
         for probe_id in pings.failed_probes
         }
 
-    logger.info(' Tracing target with ping-failed probes')
+    logger.info('Tracing target with ping-failed probes')
 
     traces = TraceMeasure(
         args.target,

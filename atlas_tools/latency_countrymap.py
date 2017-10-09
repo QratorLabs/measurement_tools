@@ -28,7 +28,7 @@ class CountryMapper(object):
         args_parser = self.get_args_parser()
         args = self.args = args_parser.parse_args(args)
 
-        logger.info(' Target: %s', args.target)
+        logger.info('Target: %s', args.target)
 
         if args.filename is None:
             args.filename = '%s_%s' % (args.target, self.project_name)
@@ -85,7 +85,7 @@ class CountryMapper(object):
         return states
 
     def run(self):
-        logger.info(' Drawing the countrymap')
+        logger.info('Drawing the countrymap')
 
         resource_dir = pkg_resources.resource_filename(__package__, shapefile_dir)
         resource_fname = os.path.join(resource_dir, shapefile_name)

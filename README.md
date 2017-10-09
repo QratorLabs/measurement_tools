@@ -9,7 +9,7 @@ Features:
 * atlas-reachability - diagnostic tool that measures availability of target around the world (or country) and traces target from probes with false result.
 
 
-##Getting Started
+## Getting Started
 
 Firstly, your should create an [RIPE Atlas](https://atlas.ripe.net/) account. Then accumulate some credits.
 
