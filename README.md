@@ -1,6 +1,6 @@
-# Atlas tools
+# Measurement tools
 
-Atlas tools is a Python package that works with Ripe Atlas probes.
+Tools to create latency and connectivity measurements using RIPE Atlas.
 
 Features:
 * atlas-heatmap - draws a world heatmap of target latency from Atlas probes to target
