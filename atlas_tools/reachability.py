@@ -102,8 +102,11 @@ def do_ip_test(args=None):
         probes_features['country_code'] = args.country
 
     pings = PingMeasure(
-        args.target, args.key, protocol=args.protocol,
-        probes_features=probes_features
+        args.target, args.key,
+        protocol=args.protocol,
+        probes_features=probes_features,
+        probe_number=args.probe_number,
+        timeout=args.timeout
     )
     pings.run()
 
@@ -123,7 +126,8 @@ def do_ip_test(args=None):
         args.target,
         args.key,
         protocol=args.protocol,
-        probes_data=probes_data
+        probes_data=probes_data,
+        timeout=args.timeout
     )
     traces.run()
 

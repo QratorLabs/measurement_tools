@@ -1,7 +1,7 @@
 from datetime import datetime
 import time
 
-from ripe.atlas.cousteau import Ping, Traceroute, AtlasSource, \
+from ripe.atlas.cousteau import Ping, Traceroute, AtlasRequest, AtlasSource, \
     AtlasCreateRequest, AtlasResultsRequest, ProbeRequest
 
 
@@ -72,15 +72,41 @@ class Atlas(object):
         return is_success, response
 
     @staticmethod
-    def request_results(response):
+    def request_results(response, timeout):
+        msm_data = list()
         for measurement_num in response:
             kwargs = {
                 "msm_id": measurement_num
             }
 
+            # Check measurement status. Move on if measurement stopped or timeout expired.
+            is_success, results = AtlasStatusRequest(**kwargs).create()
+            while not is_success \
+                    or results['status']['name'] == 'Ongoing' \
+                    or (timeout is not None and
+                        time.time() - results['start_time'] < timeout):
+                time.sleep(10)
+                is_success, results = AtlasStatusRequest(**kwargs).create()
+
+            # Get measurement data
             is_success, results = AtlasResultsRequest(**kwargs).create()
             while not is_success:
-                time.sleep(100)
+                time.sleep(10)
                 is_success, results = AtlasResultsRequest(**kwargs).create()
 
-            yield results
+            msm_data.extend(results)
+
+        return msm_data
+
+
+class AtlasStatusRequest(AtlasRequest):
+    def __init__(self, **kwargs):
+        super(AtlasStatusRequest, self).__init__(**kwargs)
+
+        self.url_path = '/api/v2/measurements/{0}/'
+        self.msm_id = kwargs["msm_id"]
+
+        self.url_path = self.url_path.format(self.msm_id)
+
+    def create(self):
+        return self.get()

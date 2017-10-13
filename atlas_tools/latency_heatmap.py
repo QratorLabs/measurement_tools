@@ -8,12 +8,14 @@ from geopy.distance import great_circle
 from geoviews import feature as gf
 import geoviews as gv
 import holoviews as hv
+from matplotlib import pyplot
 import numpy as np
 import xarray as xr
 
 from measurement import PingMeasure
 from util import get_parent_args_parser, start_logger
 
+renderer_name = 'Agg'
 hv.extension('matplotlib')
 hv.output(backend='matplotlib')
 longitude_equator_1_degree = 111.321
@@ -47,7 +49,9 @@ class HeatMapper(object):
             args.key,
             protocol=args.protocol,
             probes_features=probes_features,
-            measurements_list=args.msms
+            measurements_list=args.msms,
+            probe_number=args.probe_number,
+            timeout=args.timeout
         )
         self.pings.run()
         self.final_grid = np.full(
@@ -143,7 +147,7 @@ class HeatMapper(object):
 
         d = {'coords': {'latitude': {'dims': ('latitude',), 'data': lat},
                         'longitude': {'dims': ('longitude',), 'data': lon}},
-             'attrs': {'title': 'Qrator latency map'},
+             'attrs': {'title': '%s latency heatmap' % self.args.target},
              'dims': ['latitude', 'longitude'],
              'data_vars': {'latency': {'dims': ('latitude', 'longitude'),
                                        'data': self.final_grid}}
@@ -156,6 +160,8 @@ class HeatMapper(object):
             vdims=['latency'],
             crs=crs.PlateCarree()
         )
+
+        pyplot.switch_backend(renderer_name)
         hv.output(dpi=200, size=500)
         hv.opts("Image [colorbar=True clipping_colors={'min': 'lightgrey'}]")
 

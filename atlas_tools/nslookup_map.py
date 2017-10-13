@@ -40,7 +40,9 @@ class NsLookupMapper(object):
             args.key,
             protocol=args.protocol,
             probes_features=probes_features,
-            measurements_list=args.msms
+            measurements_list=args.msms,
+            probe_number=args.probe_number,
+            timeout=args.timeout
         )
         self.pings.run()
 

@@ -35,8 +35,15 @@ def get_parent_args_parser():
     parser.add_argument(
         '-n', '--probe_number',
         type=int,
-        help='Number of probes in measurement, '
+        default=25000,
+        help='Number of probes in measurement '
              '(default: all active Atlas probes)'
+    )
+    parser.add_argument(
+        '-T', '--timeout',
+        type=int,
+        help='Time allocated for measurement in seconds'
+             '(default: until the measurement stops)'
     )
 
     return parser

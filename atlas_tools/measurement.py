@@ -1,5 +1,4 @@
 import logging
-import time
 
 from ripe_atlas import Atlas, form_probes
 
@@ -19,11 +18,13 @@ def chunks(objects_dict, size=10000):
 
 class Measure(object):
     def __init__(self, target, atlas_api_key,
-                 protocol='ICMP', probes_data=None, probe_number=25000,
-                 probes_features=None, measurements_list=None):
+                 protocol='ICMP', probes_data=None, probe_number=None,
+                 timeout=None, probes_features=None, measurements_list=None):
         self.atlas = Atlas(atlas_api_key, protocol=protocol)
         self.name = ''
         self.target = target
+        self.timeout = timeout
+        self.msm_data = list()
         self.results = list()
 
         if measurements_list is None:
@@ -44,9 +45,9 @@ class Measure(object):
 
         if self.response:
             probe_ids = []
-            for results in self.atlas.request_results(self.response):
-                for item in results:
-                    probe_ids.append(item['prb_id'])
+            self.msm_data = self.atlas.request_results(self.response, self.timeout)
+            for item in self.msm_data:
+                probe_ids.append(item['prb_id'])
 
             probes_features = {'id__in': probe_ids}
 
@@ -72,7 +73,7 @@ class Measure(object):
     def _make_measurement(self):
         pass
 
-    def _form_response(self, measurement, time_to_wait=180):
+    def _form_response(self, measurement):
         logger.info('Forming measurement and waiting response')
 
         # Atlas limits:
@@ -93,19 +94,17 @@ class Measure(object):
             else:
                 logger.error('%s %s', is_success, resp)
 
-        time.sleep(time_to_wait)
-
-    def _flush_results(self, results):
+    def _flush_results(self):
         pass
 
     def run(self):
         if not self.response:
             self._make_measurement()
+            self.msm_data = self.atlas.request_results(self.response, self.timeout)
 
         logger.info('Atlas %s measurement ids: %s', self.name, self.response)
 
-        for results in self.atlas.request_results(self.response):
-            self._flush_results(results)
+        self._flush_results()
 
 
 class PingMeasure(Measure):
@@ -118,8 +117,8 @@ class PingMeasure(Measure):
         measurement = self.atlas.create_ping(target=self.target)
         self._form_response(measurement)
 
-    def _flush_results(self, results):
-        for item in results:
+    def _flush_results(self):
+        for item in self.msm_data:
             prb_id = item['prb_id']
             rtt = item['min']
             src_ip = item['from']
@@ -156,9 +155,9 @@ class TraceMeasure(Measure):
         measurement = self.atlas.create_traceroute(target=self.target)
         self._form_response(measurement)
 
-    def _flush_results(self, results):
+    def _flush_results(self):
         parsed_result = []
-        for trace_data in results:
+        for trace_data in self.msm_data:
             trace = []
             prb_id = trace_data['prb_id']
             dst_ip = trace_data['dst_addr']

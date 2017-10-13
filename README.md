@@ -44,6 +44,7 @@ Thereby, if you want to use 8250 probes for your experiment, RIPE Atlas will cre
 -f, --filename - allows you to specify maps/results filename
 
 You can define single country for your measurement (-c, --country) or limit number of probes of experiment (-n, --number)
+By default all active probes are used.
 ```
 atlas-availability -t 'target' -k 'your_atlas_api_key' -c RU
 atlas-nslookupmap -t 'target' -k 'your_atlas_api_key' -n 3000
@@ -53,3 +54,7 @@ For maps, its available to use your previous measurements (-m, --msm):
 ```
 atlas-heatmap -t 'target' -k 'your_atlas_api_key' -m msm_id1 msm_id2 ...
 ```
+
+Time (seconds) allocated for measurements can be set by -T (--timeout) flag.
+If this flag is not specified then wait till measurements stopped (usually about 7-8 min).
+Recommended value: 180.

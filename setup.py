@@ -19,7 +19,7 @@ setup(
         'geopandas',
         'geopy',
         'holoviews',
-        'matplotlib==1.5.3',
+        'matplotlib',
         'numpy',
         'pandas',
         'Pillow',
