@@ -38,10 +38,10 @@ class Measure(object):
         else:
             self.probes_data = probes_data
 
-    def _form_probes(self, probes_features, probe_number):
+    def _form_probes(self, probe_params, probe_number):
         logger.info('Forming probes list')
-        if probes_features is None:
-            probes_features = {}
+        if probe_params is None:
+            probe_params = {}
 
         if self.response:
             probe_ids = []
@@ -49,25 +49,13 @@ class Measure(object):
             for item in self.msm_data:
                 probe_ids.append(item['prb_id'])
 
-            probes_features = {'id__in': probe_ids}
+            probe_params = {'id__in': probe_ids}
 
         else:
-            probes_features['status_name'] = 'Connected'
-            probes_features['tags'] = "system-ipv4-works"
+            probe_params['status_name'] = 'Connected'
+            probe_params['tags'] = "system-ipv4-works"
 
-        probes_data = form_probes(**probes_features)
-        if len(probes_data) > probe_number:
-            logger.warning(
-                'More than %s probes (%s), cut to %s',
-                probe_number,
-                len(probes_data),
-                probe_number
-            )
-            probes_data = {
-                probe_id: probes_data[probe_id]
-                for probe_id in probes_data.keys()[:probe_number]
-                }
-
+        probes_data = form_probes(probe_params, limit=probe_number)
         return probes_data
 
     def _make_measurement(self):
@@ -129,21 +117,20 @@ class PingMeasure(Measure):
                 logger.info('Dns resolution failed: %s', prb_id)
                 continue
 
-            if rtt == -1:
-                self.failed_probes[prb_id] = \
-                    self.probes_data[prb_id]['country_code']
+            prb_data = self.probes_data.get(prb_id)
+            if prb_data is None:
                 continue
 
-            prb_data = self.probes_data[prb_id]
-            asn, region, coords = [
-                prb_data[elem]
-                for elem in ('asn_v4', 'country_code', 'geometry')
-                ]
-            lon, lat = coords['coordinates']
+            if rtt == -1:
+                self.failed_probes[prb_id] = prb_data['country_code']
+                continue
 
-            self.results.append(
-                (prb_id, src_ip, dst_ip, asn, region, lat, lon, rtt)
+            lon, lat = prb_data['geometry']['coordinates']
+            data = (
+                prb_id, src_ip, dst_ip, prb_data['asn_v4'],
+                prb_data['country_code'], lat, lon, rtt
             )
+            self.results.append(data)
 
 
 class TraceMeasure(Measure):
@@ -181,3 +168,36 @@ class TraceMeasure(Measure):
                 parsed_result.append((src_ip, prb_id, trace))
 
         self.results.extend(parsed_result)
+
+
+def ping_measure(atlas_key, target, protocol, country=None,
+                 probe_limit=None, timeout=None, measurements_list=None):
+    probe_params = {}
+    if country is not None:
+        probe_params['country_code'] = country
+
+    pings = PingMeasure(
+        target,
+        atlas_key,
+        protocol=protocol,
+        probes_features=probe_params,
+        measurements_list=measurements_list,
+        probe_number=probe_limit,
+        timeout=timeout
+    )
+    pings.run()
+
+    return pings
+
+
+def trace_measure(atlas_key, target, protocol, probes_data, timeout=None):
+    traces = TraceMeasure(
+        target,
+        atlas_key,
+        protocol=protocol,
+        probes_data=probes_data,
+        timeout=timeout
+    )
+    traces.run()
+
+    return traces

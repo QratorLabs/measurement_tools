@@ -1,15 +1,22 @@
 from datetime import datetime
+import logging
 import time
 
 from ripe.atlas.cousteau import Ping, Traceroute, AtlasRequest, AtlasSource, \
     AtlasCreateRequest, AtlasResultsRequest, ProbeRequest
 
+logger = logging.getLogger(__name__)
 
-def form_probes(**kwargs):
+
+def form_probes(atlas_params, limit=None):
+    probe_request = ProbeRequest(**atlas_params)
+
     probes_data = {}
-    probe_request = ProbeRequest(**kwargs)
     for probe in probe_request:
         probes_data[probe['id']] = probe
+
+        if limit is not None and len(probes_data) >= limit:
+            break
 
     return probes_data
 
@@ -68,7 +75,6 @@ class Atlas(object):
         )
 
         (is_success, response) = atlas_request.create()
-
         return is_success, response
 
     @staticmethod
@@ -80,19 +86,31 @@ class Atlas(object):
             }
 
             # Check measurement status. Move on if measurement stopped or timeout expired.
-            is_success, results = AtlasStatusRequest(**kwargs).create()
-            while not is_success \
-                    or results['status']['name'] == 'Ongoing' \
-                    or (timeout is not None and
-                        time.time() - results['start_time'] < timeout):
-                time.sleep(10)
+            while True:
                 is_success, results = AtlasStatusRequest(**kwargs).create()
+                if is_success:
+                    if results['status']['name'] == 'Stopped':
+                        break
+                    if timeout is not None and time.time() >= results['start_time'] + timeout:
+                        logging.warning('measurement %d timeout', measurement_num)
+                        break
+
+                    logging.info('measurement %d status: %s', measurement_num, results['status']['name'])
+                else:
+                    logging.warning('status request failed: %s', results)
+
+                time.sleep(10)
+                continue
 
             # Get measurement data
-            is_success, results = AtlasResultsRequest(**kwargs).create()
-            while not is_success:
-                time.sleep(10)
+            while True:
                 is_success, results = AtlasResultsRequest(**kwargs).create()
+                if is_success:
+                    break
+                else:
+                    logging.warning('status request failed: %s', results)
+                    time.sleep(10)
+                    continue
 
             msm_data.extend(results)
 

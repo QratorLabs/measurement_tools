@@ -2,30 +2,17 @@ import argparse
 from collections import defaultdict
 import logging
 import socket
-import time
 
-from measurement import PingMeasure, TraceMeasure
+from measurement import ping_measure, trace_measure
 from util import get_parent_args_parser, start_logger
 
-
 logger = logging.getLogger(__name__)
-project_name = __package__.split('.')[0]
+
+FAILED_COUNTRIES_SIZE = 10
+FAILED_COUNTRIES = False
 
 
-def lookup(addr):
-    try:
-        return socket.gethostbyaddr(addr)
-    except socket.herror:
-        return None, None, None
-
-
-def get_args_parser():
-    parser = argparse.ArgumentParser(parents=[get_parent_args_parser()])
-
-    return parser
-
-
-def log_pings(pings, failed_countries, failed_countries_size):
+def _log_pings(pings, failed_countries, failed_countries_size):
     logger.info('Atlas ping measurement ids: %s', pings.response)
     logger.info(
         'Failed pings: %s / %s',
@@ -40,10 +27,12 @@ def log_pings(pings, failed_countries, failed_countries_size):
 
         logging.info('Probe_ids: %s', pings.failed_probes.keys())
         logging.info('Failed pings breakdown by countries:')
+
         f_countries = f_countries.items()
         f_countries.sort(key=lambda tup: tup[1], reverse=True)
-        for i in xrange(min(failed_countries_size, len(f_countries))):
-            country, counter = f_countries[i]
+
+        for idx in xrange(min(failed_countries_size, len(f_countries))):
+            country, counter = f_countries[idx]
             logging.info(
                 '%s: %.4f',
                 country,
@@ -51,7 +40,7 @@ def log_pings(pings, failed_countries, failed_countries_size):
             )
 
 
-def log_traces(traces, failed_probes, filename):
+def _log_traces(traces, failed_probes, filename):
     logger.info('Atlas trace measurement ids: %s', traces.response)
     logger.info(
         'Failed traces: %s / %s',
@@ -59,7 +48,7 @@ def log_traces(traces, failed_probes, filename):
         len(failed_probes)
     )
 
-    with open('%s.dat' % filename, 'w+') as fd:
+    with open(filename, 'w+') as fd:
         for src_ip, prb_id, trace in traces.results:
             fd.write(
                 'Source ip: %s, prb_id: %s\nTrace:\nHop\tip\t\trtt\tptr\n' %
@@ -75,60 +64,62 @@ def log_traces(traces, failed_probes, filename):
                 elif hop_ip == 'error':
                     fd.write('%s\t%s\n' % (hop_num, hop_rtt))
                 else:
-                    host_str, _, _ = lookup(hop_ip)
-                    fd.write(
-                        '%s\t%s\t%s\t%s\n' %
-                        (hop_num, hop_ip, hop_rtt, host_str)
-                    )
+                    try:
+                        host_str, _, _ = socket.gethostbyaddr(hop_ip)
+                        fd.write(
+                            '%s\t%s\t%s\t%s\n' %
+                            (hop_num, hop_ip, hop_rtt, host_str)
+                        )
+                    except socket.herror:
+                        pass
+
             fd.write('\n')
 
 
-def do_ip_test(args=None):
-    start_logger(project_name)
-
-    failed_countries_size = 10
-    failed_countries = False
-
-    args_parser = get_args_parser()
-    args = args_parser.parse_args(args)
-
-    logger.info('Target: %s', args.target)
-
-    if args.filename is None:
-        args.filename = 'failed_traces_to_%s' % args.target
-
-    probes_features = dict()
-    if args.country is not None:
-        probes_features['country_code'] = args.country
-
-    pings = PingMeasure(
-        args.target, args.key,
-        protocol=args.protocol,
-        probes_features=probes_features,
-        probe_number=args.probe_number,
-        timeout=args.timeout
+def test_reachability(fname, atlas_key, target, protocol, country=None,
+                      probe_limit=None, timeout=None):
+    pings = ping_measure(
+        atlas_key, target, protocol,
+        country=country,
+        probe_limit=probe_limit,
+        timeout=timeout
     )
-    pings.run()
 
-    log_pings(pings, failed_countries, failed_countries_size)
+    _log_pings(pings, FAILED_COUNTRIES, FAILED_COUNTRIES_SIZE)
 
-    if len(pings.probes_data) > 9000 or len(pings.failed_probes) > 1000:
-        time.sleep(420)
+
+    logger.info('Tracing target with ping-failed probes')
 
     probes_data = {
         probe_id: pings.probes_data[probe_id]
         for probe_id in pings.failed_probes
-        }
+    }
 
-    logger.info('Tracing target with ping-failed probes')
-
-    traces = TraceMeasure(
-        args.target,
-        args.key,
-        protocol=args.protocol,
+    traces = trace_measure(
+        atlas_key, target, protocol,
         probes_data=probes_data,
+        timeout=timeout
+    )
+
+    _log_traces(traces, pings.failed_probes, fname)
+
+
+def main():
+    start_logger('atlas_tools')
+
+    parser = argparse.ArgumentParser(parents=[get_parent_args_parser()])
+    args = parser.parse_args()
+
+    if args.filename is None:
+        args.filename = 'reachability_%s.dat' % args.target
+
+    test_reachability(
+        args.filename, args.key, args.target, args.protocol,
+        country=args.country,
+        probe_limit=args.probe_number,
         timeout=args.timeout
     )
-    traces.run()
 
-    log_traces(traces, pings.failed_probes, args.filename)
+
+if __name__ == '__main__':
+    main()
