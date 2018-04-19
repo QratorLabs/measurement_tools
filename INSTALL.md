@@ -5,5 +5,9 @@ apt-get install proj-bin libproj-dev libgeos-dev python-tk
 ```
 
 ```bash
-atlas_tools$ pip install -r requirements.txt
+pip install -r requirements/base.txt
+pip install -r requirements/sci.txt
+pip install -r requirements/map.txt
+pip install -r requirements/geoviews.txt
+pip install .
 ```

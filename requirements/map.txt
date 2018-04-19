@@ -1,0 +1,7 @@
+Cartopy
+folium
+geopandas
+geopy
+holoviews==1.9.0
+Pillow
+xarray
