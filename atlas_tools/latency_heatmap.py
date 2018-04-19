@@ -13,7 +13,7 @@ import numpy as np
 import xarray as xr
 
 from measurement import ping_measure
-from util import get_parent_args_parser
+from util import get_parent_args_parser, start_logger
 
 
 RENDERER_NAME = 'Agg'
@@ -147,6 +147,8 @@ def create_heatmap(fname, atlas_key, target, protocol, density=4, country=None,
 
 
 def main():
+    start_logger('atlas_tools')
+
     parser = argparse.ArgumentParser(parents=[get_parent_args_parser()])
     parser.add_argument(
         '-d', '--density',

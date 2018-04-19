@@ -6,7 +6,7 @@ import folium
 import pandas
 
 from measurement import ping_measure
-from util import get_parent_args_parser
+from util import get_parent_args_parser, start_logger
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +86,8 @@ def create_map(fname, atlas_key, target, protocol, country=None,
 
 
 def main():
+    start_logger('atlas_tools')
+
     parser = argparse.ArgumentParser(parents=[get_parent_args_parser()])
     parser.add_argument(
         '-m', '--msms',

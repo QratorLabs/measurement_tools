@@ -9,7 +9,7 @@ import pandas
 import pkg_resources
 
 from measurement import ping_measure
-from util import get_parent_args_parser
+from util import get_parent_args_parser, start_logger
 
 SHAPEFILE_DIR = 'countries'
 SHAPEFILE_NAME = 'ne_50m_admin_0_countries.shp'
@@ -96,6 +96,8 @@ def create_countrymap(fname, atlas_key, target, protocol, country=None,
 
 
 def main():
+    start_logger('atlas_tools')
+
     parser = argparse.ArgumentParser(parents=[get_parent_args_parser()])
     parser.add_argument(
         '-m', '--msms',
