@@ -6,7 +6,7 @@ import folium
 import pandas
 
 from atlas_tools.measurement import ping_measure
-from atlas_tools.util import base_parser, atlas_parser, ping_parser, start_logger
+from atlas_tools.util import base_parser, atlas_parser, ping_parser, start_logger, check_ping_args
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +40,7 @@ def _make_map(ping_results, fname):
         resolves_counters[row["dst_ip"]] += 1
 
     resolves_counters = [
-        (dst_ip, count) for dst_ip, count in resolves_counters.iteritems()
+        (dst_ip, count) for dst_ip, count in resolves_counters.items()
     ]
     resolves_counters.sort(key=lambda tup: tup[1], reverse=True)
 
@@ -96,6 +96,7 @@ def main():
     )
     args = parser.parse_args()
 
+    check_ping_args(parser, args)
     if args.filename is None:
         args.filename = 'dnsmap_%s.html' % args.target
 

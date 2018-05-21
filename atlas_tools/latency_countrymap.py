@@ -9,7 +9,7 @@ import pandas
 import pkg_resources
 
 from atlas_tools.measurement import ping_measure
-from atlas_tools.util import base_parser, atlas_parser, ping_parser, start_logger
+from atlas_tools.util import base_parser, atlas_parser, ping_parser, start_logger, check_ping_args
 
 SHAPEFILE_DIR = 'countries'
 SHAPEFILE_NAME = 'ne_50m_admin_0_countries.shp'
@@ -23,7 +23,7 @@ def _handle_data(ping_results):
         states_array[region].append(rtt)
 
     states = dict()
-    for country, rtt_list in states_array.iteritems():
+    for country, rtt_list in states_array.items():
         states[country] = min(int(sum(rtt_list) / len(rtt_list)), 120)
 
     return states
@@ -45,7 +45,7 @@ def _draw_countrymap(cut_countries, fname):
     df_shapefile_countries = geopandas.GeoDataFrame.from_file(resource_fname)
 
     dataframe = pandas.DataFrame(
-        data=cut_countries.items(),
+        data=list(cut_countries.items()),
         columns=['iso_a2', 'Latency'],
     )
     dataframe.set_index('iso_a2', inplace=True)
@@ -106,6 +106,7 @@ def main():
     )
     args = parser.parse_args()
 
+    check_ping_args(parser, args)
     if args.filename is None:
         args.filename = 'countrymap_%s.html' % args.target
 

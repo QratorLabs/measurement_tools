@@ -37,6 +37,9 @@ Thereby, if you want to use e.g. 8250 probes for your experiment, RIPE Atlas wil
 
 
 ### Flags
+
+Atlas key (`-k, --key`) is required for creating new measurements (i.e. if `-m` option is missing).
+
 `-f, --filename` flag allows you to specify the output filename.
 
 You can define single country for your measurement (`-c, --country`) or limit number of probes of experiment (`-n, --number`).
@@ -50,5 +53,6 @@ For all world maps it is possible to use existing ping measurements (`-m, --meas
 ```
 atlas-heatmap -t 'target' -k 'your_atlas_api_key' -m id1 id2 ...
 ```
+In this case Atlas key is not required.
 
 Time (seconds) allocated for measurements can be set by `-T` (`--timeout`) flag. Default value is 15 min.

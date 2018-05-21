@@ -1,7 +1,7 @@
 FROM ubuntu:16.04
 
 RUN apt-get update
-RUN apt-get install -y gcc g++ git python-dev
+RUN apt-get install -y gcc g++ git
 RUN apt-get install -y python-pip
 RUN apt-get install -y libgeos-dev proj-bin libproj-dev python-tk
 

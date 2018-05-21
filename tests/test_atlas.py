@@ -29,7 +29,7 @@ class TestAtlas(unittest.TestCase):
         probes = form_probes({})
         self.assertIsInstance(probes, dict)
 
-        for probe_id, probe in probes.iteritems():
+        for probe_id, probe in probes.items():
             self.assertEqual(probe_id, probe['id'])
 
     def test_countrymap(self):

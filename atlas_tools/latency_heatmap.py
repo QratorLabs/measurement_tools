@@ -13,7 +13,7 @@ import numpy as np
 import xarray as xr
 
 from atlas_tools.measurement import ping_measure
-from atlas_tools.util import base_parser, atlas_parser, ping_parser, start_logger
+from atlas_tools.util import base_parser, atlas_parser, ping_parser, start_logger, check_ping_args
 
 
 RENDERER_NAME = 'Agg'
@@ -52,8 +52,8 @@ def _coords_in_circle(density, center_lat_geo, center_lon_geo, radius=250):
 
     min_lon, max_lon = _minmax_coords(center_lon_index, lon_radius)
     min_lat, max_lat = _minmax_coords(center_lat_index, lat_radius)
-    for lon_index in xrange(min_lon, max_lon):
-        for lat_index in xrange(min_lat, max_lat):
+    for lon_index in range(min_lon, max_lon):
+        for lat_index in range(min_lat, max_lat):
             lat_geo, lon_geo = _indices_to_coords(density, lat_index, lon_index)
             if lat_geo > 80 or lat_geo < -80:
                 continue
@@ -80,7 +80,7 @@ def _make_grid(ping_results, density):
         BASE_VALUE
     )
 
-    for (lat_index, lon_index), rtts in probes_grid.iteritems():
+    for (lat_index, lon_index), rtts in probes_grid.items():
         final_grid[lat_index][lon_index] = max(
             30, (sum(rtts) / len(rtts))
         )
@@ -94,13 +94,20 @@ def _make_heatmap(final_grid, density, fname, target):
     lat = np.linspace(-90, 90, num=180 * density + 1)
     lon = np.linspace(-179.75, 180, num=360 * density)
 
-    d = {'coords': {'latitude': {'dims': ('latitude',), 'data': lat},
-                    'longitude': {'dims': ('longitude',), 'data': lon}},
-         'attrs': {'title': '%s latency heatmap' % target},
-         'dims': ['latitude', 'longitude'],
-         'data_vars': {'latency': {'dims': ('latitude', 'longitude'),
-                                   'data': final_grid}}
-         }
+    d = {
+        'coords': {
+            'latitude': {'dims': ('latitude',), 'data': lat},
+            'longitude': {'dims': ('longitude',), 'data': lon}
+        },
+        'attrs': {'title': '%s latency heatmap' % target},
+        'dims': ['latitude', 'longitude'],
+        'data_vars': {
+            'latency': {
+                'dims': ('latitude', 'longitude'),
+                'data': final_grid
+            }
+        }
+    }
 
     xr_set = xr.Dataset.from_dict(d)
     xr_dataset = gv.Dataset(
@@ -163,6 +170,7 @@ def main():
     )
     args = parser.parse_args()
 
+    check_ping_args(parser, args)
     if args.filename is None:
         args.filename = 'heatmap_%s.png' % args.target
 

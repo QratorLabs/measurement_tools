@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 def chunks(objects_dict, size=10000):
     chunk = []
-    for obj in objects_dict.iterkeys():
+    for obj in objects_dict.keys():
         chunk.append(obj)
         if len(chunk) >= size:
             yield chunk

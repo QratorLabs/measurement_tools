@@ -1,5 +1,6 @@
 import argparse
 import logging
+import sys
 
 LOGGING_FORMAT = '%(asctime)s: %(message)s'
 
@@ -19,7 +20,7 @@ def atlas_parser():
     )
     parser.add_argument(
         '-k', '--key',
-        required=True,
+        # required=True,
         help='ATLAS_API_CREATE_KEY'
     )
     parser.add_argument(
@@ -58,6 +59,11 @@ def ping_parser():
              '(default: create new measurements)'
     )
     return parser
+
+
+def check_ping_args(parser, args):
+    if args.key is None and args.msms is None:
+        parser.error('Atlas key (-k) is required for creating new measurements')
 
 
 def start_logger(project_name, verbose=False):

@@ -25,7 +25,7 @@ def _log_pings(pings, failed_countries, failed_countries_size):
 
     if failed_countries:
         f_countries = defaultdict(int)
-        for country in pings.failed_probes.itervalues():
+        for country in pings.failed_probes.values():
             f_countries[country.upper()] += 1
 
         logging.info('Probe IDs: %s', pings.failed_probes.keys())
@@ -34,7 +34,7 @@ def _log_pings(pings, failed_countries, failed_countries_size):
         f_countries = f_countries.items()
         f_countries.sort(key=lambda tup: tup[1], reverse=True)
 
-        for idx in xrange(min(failed_countries_size, len(f_countries))):
+        for idx in range(min(failed_countries_size, len(f_countries))):
             country, counter = f_countries[idx]
             logging.info(
                 '%s: %.4f',

@@ -22,7 +22,7 @@ atlas_data_types = {
 
 def _json_data(name):
     fpath = os.path.join(DATA_PATH, name + '.json.gz')
-    with gzip.open(fpath) as fd:
+    with gzip.open(fpath, 'rt') as fd:
         return json.load(fd)
 
 
