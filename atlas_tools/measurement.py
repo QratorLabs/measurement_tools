@@ -1,6 +1,8 @@
+from __future__ import print_function
+
 import logging
 
-from ripe_atlas import Atlas, form_probes
+from atlas_tools.ripe_atlas import Atlas, form_probes
 
 logger = logging.getLogger(__name__)
 
@@ -90,7 +92,8 @@ class Measure(object):
             self._make_measurement()
             self.msm_data = self.atlas.request_results(self.response, self.timeout)
 
-        logger.info('Atlas %s measurement ids: %s', self.name, self.response)
+        print('Atlas %s measurement IDs: %s' %
+              (self.name, ' '.join(str(mid) for mid in self.response)))
 
         self._flush_results()
 
@@ -170,7 +173,7 @@ class TraceMeasure(Measure):
         self.results.extend(parsed_result)
 
 
-def ping_measure(atlas_key, target, protocol, country=None,
+def ping_measure(atlas_key, target, country=None,
                  probe_limit=None, timeout=None, measurements_list=None):
     probe_params = {}
     if country is not None:
@@ -179,7 +182,6 @@ def ping_measure(atlas_key, target, protocol, country=None,
     pings = PingMeasure(
         target,
         atlas_key,
-        protocol=protocol,
         probes_features=probe_params,
         measurements_list=measurements_list,
         probe_number=probe_limit,

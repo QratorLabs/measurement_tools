@@ -2,12 +2,10 @@
 
 from setuptools import find_packages, setup
 
-from atlas_tools import __version__
-
 
 setup(
     name='atlas_tools',
-    version=__version__,
+    version='0.2.0',
     author='Alexander Yakushkin, Evgeny Uskov',
     author_email='ay@qrator.net, eu@qrator.net',
     packages=find_packages(),

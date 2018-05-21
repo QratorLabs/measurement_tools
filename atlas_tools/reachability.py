@@ -1,10 +1,12 @@
+from __future__ import print_function
+
 import argparse
 from collections import defaultdict
 import logging
 import socket
 
-from measurement import ping_measure, trace_measure
-from util import get_parent_args_parser, start_logger
+from atlas_tools.measurement import ping_measure, trace_measure
+from atlas_tools.util import base_parser, atlas_parser, start_logger
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +15,8 @@ FAILED_COUNTRIES = False
 
 
 def _log_pings(pings, failed_countries, failed_countries_size):
-    logger.info('Atlas ping measurement ids: %s', pings.response)
+    print('Atlas ping measurement IDs: %s' % ' '.join(str(mid) for mid in pings.response))
+
     logger.info(
         'Failed pings: %s / %s',
         len(pings.failed_probes),
@@ -25,7 +28,7 @@ def _log_pings(pings, failed_countries, failed_countries_size):
         for country in pings.failed_probes.itervalues():
             f_countries[country.upper()] += 1
 
-        logging.info('Probe_ids: %s', pings.failed_probes.keys())
+        logging.info('Probe IDs: %s', pings.failed_probes.keys())
         logging.info('Failed pings breakdown by countries:')
 
         f_countries = f_countries.items()
@@ -79,7 +82,7 @@ def _log_traces(traces, failed_probes, filename):
 def test_reachability(fname, atlas_key, target, protocol, country=None,
                       probe_limit=None, timeout=None):
     pings = ping_measure(
-        atlas_key, target, protocol,
+        atlas_key, target,
         country=country,
         probe_limit=probe_limit,
         timeout=timeout
@@ -105,13 +108,27 @@ def test_reachability(fname, atlas_key, target, protocol, country=None,
 
 
 def main():
-    start_logger('atlas_tools')
-
-    parser = argparse.ArgumentParser(parents=[get_parent_args_parser()])
+    parser = argparse.ArgumentParser(
+        parents=[base_parser(), atlas_parser()],
+        description='measure availability of the target around the world (or country) '
+                    'and then build traceroutes from probes with false result'
+    )
+    parser.add_argument(
+        '-f', '--filename',
+        help="output filename (default: 'reachability_<target>.dat')"
+    )
+    parser.add_argument(
+        '-p', '--protocol',
+        choices=['ICMP', 'UDP'],
+        default='ICMP',
+        help='choose measurement protocol (default: ICMP)'
+    )
     args = parser.parse_args()
 
     if args.filename is None:
         args.filename = 'reachability_%s.dat' % args.target
+
+    start_logger('atlas_tools', verbose=args.verbose)
 
     test_reachability(
         args.filename, args.key, args.target, args.protocol,

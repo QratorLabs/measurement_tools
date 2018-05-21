@@ -3,13 +3,13 @@ import unittest
 
 from mock import patch
 
-from atlas_mock import patch_atlas, atlas_data_types
-
 from atlas_tools.measurement import form_probes
 from atlas_tools.latency_countrymap import create_countrymap
 from atlas_tools.latency_heatmap import init_renderer, create_heatmap
 from atlas_tools.dns_map import create_map
 from atlas_tools.reachability import test_reachability
+
+from tests.atlas_mock import patch_atlas, atlas_data_types
 
 
 def _gethostbyaddr(addr):
@@ -36,7 +36,7 @@ class TestAtlas(unittest.TestCase):
         atlas_data_types['ping'] = 'ping_results'
 
         fname = 'countrymap.test.html'
-        create_countrymap(fname, None, self.TARGET, 'ICMP')
+        create_countrymap(fname, None, self.TARGET)
 
         self.assertTrue(os.path.exists(fname))
         if self.DELETE_FILES:
@@ -46,7 +46,7 @@ class TestAtlas(unittest.TestCase):
         atlas_data_types['ping'] = 'ping_results'
 
         fname = 'heatmap.test.png'
-        create_heatmap(fname, None, self.TARGET, 'ICMP')
+        create_heatmap(fname, None, self.TARGET)
 
         self.assertTrue(os.path.exists(fname))
         if self.DELETE_FILES:
@@ -56,7 +56,7 @@ class TestAtlas(unittest.TestCase):
         atlas_data_types['ping'] = 'ping_results'
 
         fname = 'dnsmap.test.html'
-        create_map(fname, None, self.TARGET, 'ICMP')
+        create_map(fname, None, self.TARGET)
 
         self.assertTrue(os.path.exists(fname))
         if self.DELETE_FILES:

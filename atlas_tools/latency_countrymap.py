@@ -8,8 +8,8 @@ import geopandas
 import pandas
 import pkg_resources
 
-from measurement import ping_measure
-from util import get_parent_args_parser, start_logger
+from atlas_tools.measurement import ping_measure
+from atlas_tools.util import base_parser, atlas_parser, ping_parser, start_logger
 
 SHAPEFILE_DIR = 'countries'
 SHAPEFILE_NAME = 'ne_50m_admin_0_countries.shp'
@@ -81,10 +81,10 @@ def _draw_countrymap(cut_countries, fname):
     countrymap.save(fname)
 
 
-def create_countrymap(fname, atlas_key, target, protocol, country=None,
+def create_countrymap(fname, atlas_key, target, country=None,
                       probe_limit=None, timeout=None, measurements_list=None):
     pings = ping_measure(
-        atlas_key, target, protocol,
+        atlas_key, target,
         country=country,
         probe_limit=probe_limit,
         timeout=timeout,
@@ -96,25 +96,23 @@ def create_countrymap(fname, atlas_key, target, protocol, country=None,
 
 
 def main():
-    start_logger('atlas_tools')
-
-    parser = argparse.ArgumentParser(parents=[get_parent_args_parser()])
+    parser = argparse.ArgumentParser(
+        parents=[base_parser(), atlas_parser(), ping_parser()],
+        description='create a world map which shows target latencies (RTT) from different countries'
+    )
     parser.add_argument(
-        '-m', '--msms',
-        metavar='id',
-        type=int,
-        default=None,
-        nargs='+',
-        help='comma-separated list of previous measurements_ids '
-             '(default: new_measurement)'
+        '-f', '--filename',
+        help="output HTML filename (default: 'countrymap_<target>.html')"
     )
     args = parser.parse_args()
 
     if args.filename is None:
         args.filename = 'countrymap_%s.html' % args.target
 
+    start_logger('atlas_tools', verbose=args.verbose)
+
     create_countrymap(
-        args.filename, args.key, args.target, args.protocol,
+        args.filename, args.key, args.target,
         country=args.country,
         probe_limit=args.probe_number,
         timeout=args.timeout,

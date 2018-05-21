@@ -12,8 +12,8 @@ from matplotlib import pyplot
 import numpy as np
 import xarray as xr
 
-from measurement import ping_measure
-from util import get_parent_args_parser, start_logger
+from atlas_tools.measurement import ping_measure
+from atlas_tools.util import base_parser, atlas_parser, ping_parser, start_logger
 
 
 RENDERER_NAME = 'Agg'
@@ -132,10 +132,10 @@ def init_renderer():
     pyplot.switch_backend(RENDERER_NAME)
 
 
-def create_heatmap(fname, atlas_key, target, protocol, density=4, country=None,
+def create_heatmap(fname, atlas_key, target, density=4, country=None,
                    probe_limit=None, timeout=None, measurements_list=None):
     pings = ping_measure(
-        atlas_key, target, protocol,
+        atlas_key, target,
         country=country,
         probe_limit=probe_limit,
         timeout=timeout,
@@ -147,33 +147,32 @@ def create_heatmap(fname, atlas_key, target, protocol, density=4, country=None,
 
 
 def main():
-    start_logger('atlas_tools')
-
-    parser = argparse.ArgumentParser(parents=[get_parent_args_parser()])
+    parser = argparse.ArgumentParser(
+        parents=[base_parser(), atlas_parser(), ping_parser()],
+        description='create a world heatmap of target latencies from Atlas probes'
+    )
+    parser.add_argument(
+        '-f', '--filename',
+        help="output PNG image filename (default: 'heatmap_<target>.png')"
+    )
     parser.add_argument(
         '-d', '--density',
         type=int,
         default=4,
         help='cells number per dergee (default: 4)'
     )
-    parser.add_argument(
-        '-m', '--msms',
-        metavar='id',
-        type=int,
-        default=None,
-        nargs='+',
-        help='comma-separated list of previous measurements_ids '
-             '(default: new_measurement)'
-    )
     args = parser.parse_args()
 
     if args.filename is None:
         args.filename = 'heatmap_%s.png' % args.target
 
+    start_logger('atlas_tools', verbose=args.verbose)
+
+    # initialize Matplotlib
     init_renderer()
 
     create_heatmap(
-        args.filename, args.key, args.target, args.protocol,
+        args.filename, args.key, args.target,
         density=args.density,
         country=args.country,
         probe_limit=args.probe_number,

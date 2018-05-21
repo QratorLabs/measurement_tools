@@ -2,10 +2,15 @@ import argparse
 import logging
 
 LOGGING_FORMAT = '%(asctime)s: %(message)s'
-log_filename = 'atlas.log'
 
 
-def get_parent_args_parser():
+def base_parser():
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument('-v', '--verbose', action='store_true', help='more verbose output')
+    return parser
+
+
+def atlas_parser():
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument(
         '-t', '--target',
@@ -18,44 +23,50 @@ def get_parent_args_parser():
         help='ATLAS_API_CREATE_KEY'
     )
     parser.add_argument(
-        '-f', '--filename',
-        help='Results filename'
-    )
-    parser.add_argument(
-        '-p', '--protocol',
-        choices=['ICMP', 'UDP'],
-        default='ICMP',
-        help='Choose measurement protocol (default: ICMP)'
-    )
-    parser.add_argument(
         '-c', '--country',
-        help='Measurement only for selected country (2-letter code country) '
+        help='choose probes from this country (2-letter country code) '
              '(default: all active Atlas probes)'
     )
     parser.add_argument(
-        '-n', '--probe_number',
+        '-n', '--probe-number',
         type=int,
         default=25000,
-        help='Number of probes in measurement '
+        metavar='N',
+        help='number of probes in measurement '
              '(default: all active Atlas probes)'
     )
     parser.add_argument(
         '-T', '--timeout',
         type=int,
-        help='Time allocated for measurement in seconds'
-             '(default: until the measurement stops)'
+        default=900,
+        help='time allocated for measurement in seconds '
+             '(default: 15 min)'
     )
-
     return parser
 
 
-def start_logger(project_name):
+def ping_parser():
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument(
+        '-m', '--measurement-ids',
+        metavar='ID',
+        type=int,
+        default=None,
+        nargs='+',
+        dest='msms',
+        help='use existing measurements instead of creating the new ones '
+             '(default: create new measurements)'
+    )
+    return parser
+
+
+def start_logger(project_name, verbose=False):
     root_logger = logging.getLogger()
     for log_handler in root_logger.handlers:
         root_logger.removeHandler(log_handler)
 
     logging.basicConfig(
-        level=logging.INFO,
-        format=LOGGING_FORMAT
+        format=LOGGING_FORMAT,
+        level=logging.INFO if verbose else logging.WARNING
     )
     logging.root.handlers[0].addFilter(logging.Filter(project_name))

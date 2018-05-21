@@ -5,8 +5,8 @@ import logging
 import folium
 import pandas
 
-from measurement import ping_measure
-from util import get_parent_args_parser, start_logger
+from atlas_tools.measurement import ping_measure
+from atlas_tools.util import base_parser, atlas_parser, ping_parser, start_logger
 
 logger = logging.getLogger(__name__)
 
@@ -72,10 +72,10 @@ def _make_map(ping_results, fname):
     dns_map.save(fname)
 
 
-def create_map(fname, atlas_key, target, protocol, country=None,
+def create_map(fname, atlas_key, target, country=None,
                probe_limit=None, timeout=None, measurements_list=None):
     pings = ping_measure(
-        atlas_key, target, protocol,
+        atlas_key, target,
         country=country,
         probe_limit=probe_limit,
         timeout=timeout,
@@ -86,25 +86,23 @@ def create_map(fname, atlas_key, target, protocol, country=None,
 
 
 def main():
-    start_logger('atlas_tools')
-
-    parser = argparse.ArgumentParser(parents=[get_parent_args_parser()])
+    parser = argparse.ArgumentParser(
+        parents=[base_parser(), atlas_parser(), ping_parser()],
+        description='create a world map of DNS resolving results for the target'
+    )
     parser.add_argument(
-        '-m', '--msms',
-        metavar='id',
-        type=int,
-        default=None,
-        nargs='+',
-        help='space-separated list of previous measurements_ids'
-             '(default: new_measurement)'
+        '-f', '--filename',
+        help="output HTML filename (default: 'dnsmap_<target>.html')"
     )
     args = parser.parse_args()
 
     if args.filename is None:
         args.filename = 'dnsmap_%s.html' % args.target
 
+    start_logger('atlas_tools', verbose=args.verbose)
+
     create_map(
-        args.filename, args.key, args.target, args.protocol,
+        args.filename, args.key, args.target,
         country=args.country,
         probe_limit=args.probe_number,
         timeout=args.timeout,
